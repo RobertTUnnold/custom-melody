@@ -192,6 +192,7 @@ DiodeFilter.prototype.run = function(x){
 };
 
 var osc = Oscillator('saw', 1024);
+var bosc = Oscillator('sqr', 512);
 var lfo = Oscillator('sin', 512);
 var lfo2 = Oscillator('sin', 512);
 
@@ -233,12 +234,50 @@ var melody = [12, 0, 0, 12, 0, 0, 12, 0, 0, 12, 0, 0, 12, 0, 14, 0,
             17, 5, 5, 19, 5, 5, 20, 5, 19, 5, 5, 17, 5, 5, 19, 5,
             15, 12, 12, 12, 17, 12, 12, 12, 19, 12, 12, 12, 20, 12, 12, 12, 
             19, 19, 17, 17, 15, 15, 17, 17, 19, 7, 20, 8, 22, 10, 23, 11].map(function(n){
-  return note(n, 0);
+  return note(n, 1);
+});
+
+/*bass = [0, 0, 0, 12, 0, 0, 2, 3,
+          0, 0, 0, 12, 0, 0, 3, 2, 
+          0, 0, 0, 12, 0, 0, 2, 3,
+          0, 0, 0, 0, 2, 3, 5, 7, 
+          8, 8, 8, 8, 8, 8, 8, 12, 
+          8, 8, 8, 8, 8, 8, 8, 12, 
+          3, 3, 3, 3, 3, 3, 5, 7, 
+          5, 5, 5, 7, 7, 8, 10, 11,
+          
+          0, 0, 0, 12, 0, 0, 2, 3,
+          0, 0, 0, 12, 0, 0, 3, 2, 
+          0, 0, 0, 12, 0, 0, 2, 3,
+          0, 12, 12, 0, 12, 12, 0, 12,
+          5, 5, 5, 7, 5, 5, 5, 7, 
+          5, 5, 5, 7, 5, 5, 5, 4,
+          3, 0, 5, 0, 7, 0, 8, 0,
+          7, 5, 3, 5, 7, 8, 10, 11]*/
+          
+var bass = [0, 0, 0, 12, 0, 0, 2, 3,
+          0, 0, 0, 12, 0, 0, 3, 2, 
+          0, 0, 0, 12, 0, 0, 2, 3,
+          0, 0, 0, 0, 2, 3, 5, 7, 
+          8, 8, 8, 8, 8, 8, 8, 12, 
+          8, 8, 8, 8, 8, 8, 8, 12, 
+          3, 3, 3, 3, 3, 3, 5, 7, 
+          5, 5, 5, 7, 7, 8, 10, 11,
+          
+          0, 0, 0, 12, 0, 0, 2, 3,
+          0, 0, 0, 12, 0, 0, 3, 2, 
+          0, 0, 0, 12, 0, 0, 2, 3,
+          0, 12, 12, 0, 12, 12, 0, 12,
+          5, 5, 5, 7, 5, 5, 5, 7, 
+          5, 5, 5, 7, 5, 5, 5, 4,
+          3, 0, 5, 0, 7, 0, 8, 0,
+          7, 5, 3, 5, 7, 8, 10, 11].map(function(n) {
+    return note(n, 0);
 });
 
 var filter = new DiodeFilter();
 
-filter.set_q(0.66);
+filter.set_q(0.75);
 filter.set_hpf(.0007);
 
 export function dsp(t){
@@ -247,18 +286,21 @@ export function dsp(t){
   filter.set_fc(0.001 + ((lfo.play(2.66) * 0.16 + 1) / 2) * (0.258 + lfo2.play(.02) * 0.12)) ;
 
   var n = slide(1/16, melody, 12);
+  var b = slide(1/8, bass, 12);
 
   var synth_osc = osc.play(n);
-  var synth = arp(1/16, synth_osc, 12, 7);
-
-  synth = filter.run(synth * 0.5);
+  var bass_osc = bosc.play(b);
+  var synth = arp(1/16, synth_osc, 10, 30);
+  var bassline = arp(1/8, bass_osc, 0, 20);
+  
+  synth = filter.run(synth * 0.25);
   synth = clip(synth * 12);
 
   var kick = arp(1/4, 48, 50, 8);
 
   // mixer
   return 0.7 * (
-    0.6 * synth
-  + kick
+    0.4 * bassline
+  + kick + synth
   );
 }
